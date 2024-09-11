@@ -1,7 +1,12 @@
 void Main() {
-    CGameCtnApp app = GetApp();
-    CGameCtnEditorCommon editor = cast<CGameCtnEditorCommon@>(app.Editor);
-    CGameEditorPluginMapMapType pmt = editor.PluginMapType;
+    PrepareDll();
+}
 
-    pmt.ComputeShadows1(CGameEditorPluginMap::EShadowsQuality::High);
+[Setting category="Index Files" name="Open Interface"]
+bool S_OpenInterface = true;
+
+void RenderMenu() {
+    if (UI::MenuItem("Index Files", "", S_OpenInterface)) {
+        S_OpenInterface = !S_OpenInterface;
+    }
 }
