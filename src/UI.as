@@ -1,28 +1,25 @@
-bool g_isSelectingFiles = false;
-
 void RenderInterface() {
     if (S_OpenInterface) {
-        // UI::SetNextWindowSize(670, 300, UI::Cond::FirstUseEver);
         if (UI::Begin("Calculate Shadows", S_OpenInterface)) {
-
             UI::BeginTabBar("Tabs");
-            if (UI::BeginTabItem(Icons::Folder + " Indexing and Folder Selection")) {
-                RenderTab_IndexingAndFolderSelection();
+
+            if (UI::BeginTabItem("Indexing and Folder Selection")) {
+                Tab_IndexingAndFolderSelection::Render();
                 UI::EndTabItem();
             }
-            if (g_isSelectingFiles) {
-                if (UI::BeginTabItem(Icons::FilesO + " Further Selection")) {
-                    RenderTab_FurtherSelection();
-                    UI::EndTabItem();
-                }
-            }
-            if (UI::BeginTabItem(Icons::Info + " Current State")) {
-                RenderTab_CurrentState();
+
+            if (UI::BeginTabItem("Further Selection")) {
+                Tab_FurtherSelection::Render();
                 UI::EndTabItem();
             }
+
+            if (UI::BeginTabItem("Current State")) {
+                Tab_CurrentState::Render();
+                UI::EndTabItem();
+            }
+
             UI::EndTabBar();
         }
-
         UI::End();
     }
 }
