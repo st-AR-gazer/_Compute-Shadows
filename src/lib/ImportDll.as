@@ -35,58 +35,100 @@ Import::Library@ GetLibraryFunctions() {
 }
 
 class InputOutput {
-    Import::Function@ index_files;
-    Import::Function@ get_total_files;
-    Import::Function@ get_files_processed;
-    Import::Function@ is_indexing_in_progress;
+    private Import::Function@ start_indexing_files;
+    private Import::Function@ get_total_file_count_in_directory;
+    private Import::Function@ get_indexed_file_count_in_directory;
+    private Import::Function@ is_indexing_in_progress;
+    private Import::Function@ current_indexed_file_Name;
+    private Import::Function@ get_indexed_files;
 
     InputOutput(Import::Library@ lib) {
         if (lib !is null) {
-            @index_files = lib.GetFunction("StartIndexing");
-            @get_total_files = lib.GetFunction("GetTotalFilesToIndex");
-            @get_files_processed = lib.GetFunction("GetFilesProcessed");
-            @is_indexing_in_progress = lib.GetFunction("IsIndexingInProgress");
+            @start_indexing_files = lib.GetFunction("StartIndexingFiles");
+            @is_indexing_in_progress = lib.GetFunction("is_IndexingInProgress");
+            @get_total_file_count_in_directory = lib.GetFunction("get_TotalFilesToIndex");
+            @get_indexed_file_count_in_directory = lib.GetFunction("get_CurrentIndexedFiles");
+            @current_indexed_file_Name = lib.GetFunction("get_CurrentIndexedFileName");
+            @get_indexed_files = lib.GetFunction("get_IndexedFiles");
         }
     }
 
-    void IndexFiles(const string &in folderPath) {
-        if (index_files is null) return;
-        index_files.Call(folderPath);
+    void StartIndexingFiles(const string& inPath) {
+        if (start_indexing_files !is null) {
+            start_indexing_files.Call(inPath);
+        }
     }
 
-    int GetTotalFiles() {
-        if (get_total_files is null) return 0;
-        return get_total_files.CallInt32();
+    int get_TotalFileCountInDirectory() {
+        if (get_total_file_count_in_directory !is null) {
+            return get_total_file_count_in_directory.CallInt32();
+        }
+        return 0;
     }
 
-    int GetFilesProcessed() {
-        if (get_files_processed is null) return 0;
-        return get_files_processed.CallInt32();
+    int get_IndexedFileCountInDirectory() {
+        if (get_indexed_file_count_in_directory !is null) {
+            return get_indexed_file_count_in_directory.CallInt32();
+        }
+        return 0;
+    }
+
+    string get_CurrentIndexedFileName() {
+        if (current_indexed_file_Name !is null) {
+            return current_indexed_file_Name.CallString();
+        }
+        return "";
     }
 
     bool IsIndexingInProgress() {
-        if (is_indexing_in_progress is null) return false;
-        return is_indexing_in_progress.CallBool();
+        if (is_indexing_in_progress !is null) {
+            return is_indexing_in_progress.CallInt32() != 0;
+        }
+        return false;
     }
-}
 
-void StartIndexingProcess(const string &in path) {
-    if (io is null) {
-        log("I/O operations not initialized.", LogLevel::Error, 89, "StartIndexingProcess");
-        return;
+    Json::Value[] get_IndexedFiles() {
+        if (get_indexed_files !is null) {
+            string strJson = get_indexed_files.CallString();
+            
+            Json::Value json = StringToJson(strJson);
+
+            if (json.GetType() == Json::Type::Null) {
+                log("Failed to parse JSON.", LogLevel::Error, 87, "GetIndexedFiles");
+                return Json::Array();
+            }
+
+            Json::Value resultArray = Json::Array();
+
+            if (json.GetType() == Json::Type::Object) {
+                resultArray.Add(json);
+            } 
+            else if (json.GetType() == Json::Type::Array) {
+                for (uint i = 0; i < json.Length; i++) {
+                    resultArray.Add(json[i]);
+                }
+            }
+
+            return resultArray;
+        }
+
+        return Json::Array();
     }
-    
-    const string folderToIndex = path;
-    io.IndexFiles(folderToIndex);
-    
-    while (io.IsIndexingInProgress()) {
-        int processed = io.GetFilesProcessed();
-        int total = io.GetTotalFiles();
-        float progress = float(processed) / float(total);
+
+    private Json::Value StringToJson(const string &in strJson) {
+        Json::Value json;
         
-        print("Progress: " + (progress * 100) + "%");
-        sleep(100);
+        try {
+            json = Json::Parse(strJson);
+            
+            if (json.GetType() == Json::Type::Null) {
+                log("Failed to parse JSON: " + strJson, LogLevel::Error, 102, "StringToJson");
+            }
+        } catch {
+            log("Exception occurred while parsing JSON: " + strJson, LogLevel::Error, 107, "StringToJson");
+            return Json::Value();
+        }
+
+        return json;
     }
-    
-    log("Indexing process completed.", LogLevel::Info, 105, "StartIndexingProcess");
 }

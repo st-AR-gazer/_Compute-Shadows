@@ -10,3 +10,9 @@ void RenderMenu() {
         S_OpenInterface = !S_OpenInterface;
     }
 }
+
+SelectedShadowsQuality shadowsQuality = SelectedShadowsQuality::High;
+
+enum SelectedShadowsQuality {
+    None, VeryFast, Fast, Default, High, Ultra
+}
